@@ -25,25 +25,24 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import axios from "axios";
+import { defineComponent, type PropType } from "vue"; // 👈 nota el "type" aquí
+
+// 💡 Definición del tipo Cliente
+interface Cliente {
+  id_cliente: number;
+  nombre: string;
+  telefono: string;
+  correo: string;
+  direccion: string;
+}
 
 export default defineComponent({
   name: "ClienteList",
-  data() {
-    return {
-      clientes: [],
-    };
-  },
-  mounted() {
-    axios
-      .get("http://localhost:4000/api/clientes")
-      .then((res) => {
-        this.clientes = res.data;
-      })
-      .catch((err) => {
-        console.error("❌ Error cargando clientes:", err);
-      });
+  props: {
+    clientes: {
+      type: Array as PropType<Cliente[]>, // 👈 usa el tipo correctamente
+      required: true,
+    },
   },
 });
 </script>
