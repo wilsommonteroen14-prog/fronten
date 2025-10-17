@@ -1,9 +1,10 @@
 <template>
   <section class="management-section">
+    <!-- Formulario -->
     <div class="section-form-card">
       <h2 class="card-title">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-        <span>{{ enModoEdicion ? 'Editando Cliente' : 'Añadir Nuevo Cliente' }}</span>
+         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>{{ enModoEdicion ? 'Editando Cliente' : 'Gestión de Clientes' }}</span>
       </h2>
       <form @submit.prevent="manejarSubmit" class="form">
         <div class="form-group">
@@ -22,7 +23,7 @@
           <label for="cliente-direccion">Dirección</label>
           <input id="cliente-direccion" v-model="nuevoCliente.direccion" placeholder="Dirección del cliente" />
         </div>
-        <div class="flex space-x-4 mt-4">
+        <div class="flex space-x-4">
           <button type="submit" class="submit-button flex-grow">
             {{ enModoEdicion ? 'Guardar Cambios' : 'Agregar Cliente' }}
           </button>
@@ -33,6 +34,7 @@
       </form>
     </div>
 
+    <!-- Tabla -->
     <div class="section-table-card">
       <h3 class="table-title">Clientes Registrados</h3>
       <div class="table-container">
@@ -48,15 +50,15 @@
           </thead>
           <tbody>
             <tr v-if="clientes.length === 0">
-              <td colspan="5" class="empty-state">No hay clientes registrados.</td>
+              <td colspan="5" class="empty-state">No hay clientes para mostrar.</td>
             </tr>
             <tr v-for="cliente in clientes" :key="cliente.id_cliente">
-              <td>#{{ cliente.id_cliente }}</td>
+              <td class="font-medium">#{{ cliente.id_cliente }}</td>
               <td>{{ cliente.nombre }}</td>
               <td>{{ cliente.telefono }}</td>
               <td>{{ cliente.correo }}</td>
-              <td class="space-x-2">
-                <button @click="iniciarEdicion(cliente)" class="text-blue-600 hover:text-blue-900">Editar</button>
+              <td class="action-buttons space-x-4">
+                <button @click="iniciarEdicion(cliente)" class="text-blue-600 hover:text-blue-800">Editar</button>
               </td>
             </tr>
           </tbody>
@@ -67,32 +69,17 @@
 </template>
 
 <script setup lang="ts">
-// El <script> se queda como estaba en la última versión, está correcto.
+// --- SIN CAMBIOS EN LA LÓGICA ---
+// Todo el script se mantiene exactamente igual que en la versión anterior.
 import { ref } from 'vue';
 
-interface Cliente {
-  id_cliente: number;
-  nombre: string;
-  telefono?: string | null;
-  correo?: string | null;
-  direccion?: string | null;
-}
+interface Cliente { id_cliente: number; nombre: string; telefono?: string | null; correo?: string | null; direccion?: string | null; }
 
-const props = defineProps<{
-  clientes: Cliente[];
-  apiUrl: string;
-}>();
-
+const props = defineProps<{ clientes: Cliente[]; apiUrl: string; }>();
 const emit = defineEmits(['recargar-clientes', 'mostrar-modal']);
 
 const enModoEdicion = ref(false);
-const nuevoCliente = ref({
-  id_cliente: null as number | null,
-  nombre: '',
-  telefono: '',
-  correo: '',
-  direccion: ''
-});
+const nuevoCliente = ref({ id_cliente: null as number | null, nombre: '', telefono: '', correo: '', direccion: '' });
 
 const limpiarFormulario = () => {
   enModoEdicion.value = false;
@@ -110,9 +97,7 @@ const iniciarEdicion = (cliente: Cliente) => {
   };
 };
 
-const cancelarEdicion = () => {
-  limpiarFormulario();
-};
+const cancelarEdicion = () => { limpiarFormulario(); };
 
 const manejarSubmit = () => {
   if (enModoEdicion.value) {
@@ -129,12 +114,10 @@ const agregarCliente = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(nuevoCliente.value),
     });
-
     if (!response.ok) {
         const errorData = await response.json() as { message?: string };
         throw new Error(errorData.message || `Error del servidor: ${response.status}`);
     }
-    
     limpiarFormulario();
     emit('mostrar-modal', '✅ Éxito', 'El cliente fue agregado correctamente.');
     emit('recargar-clientes');
@@ -153,12 +136,10 @@ const actualizarCliente = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(nuevoCliente.value),
     });
-
     if (!response.ok) {
         const errorData = await response.json() as { message?: string };
         throw new Error(errorData.message || `Error al actualizar: ${response.status}`);
     }
-    
     limpiarFormulario();
     emit('mostrar-modal', '✅ Éxito', 'El cliente fue actualizado correctamente.');
     emit('recargar-clientes');
@@ -170,26 +151,5 @@ const actualizarCliente = async () => {
 </script>
 
 <style scoped>
-/* Copiamos los mismos estilos de UsuarioList para que se vean iguales */
-.management-section { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: flex-start; }
-.section-form-card, .section-table-card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.5rem; }
-.card-title { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: #1f2937; }
-.form { display: flex; flex-direction: column; gap: 1rem; }
-.form-group { display: flex; flex-direction: column; }
-.form-group label { font-size: 0.875rem; font-weight: 500; color: #4b5563; margin-bottom: 0.5rem; }
-.form-group input { padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; }
-.form-group input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px #bfdbfe; }
-.submit-button { display: flex; justify-content: center; align-items: center; gap: 0.5rem; background-color: #2563eb; color: white; padding: 0.75rem; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
-.submit-button:hover { background-color: #1d4ed8; }
-.cancel-button { background-color: #6b7280; color: white; padding: 0.75rem; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
-.cancel-button:hover { background-color: #4b5563; }
-.table-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; }
-.table-container { overflow-x: auto; }
-.data-table { width: 100%; border-collapse: collapse; text-align: left; }
-.data-table th, .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; }
-.data-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; background-color: #f9fafb; }
-.data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover { background-color: #f9fafb; }
-.empty-state { text-align: center; color: #6b7280; padding: 2rem; }
-@media (max-width: 992px) { .management-section { grid-template-columns: 1fr; } }
+/* No se necesitan estilos aquí, todo se maneja desde App.vue */
 </style>
