@@ -54,9 +54,8 @@
   </section>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, onMounted } from "vue";
-import axios from "axios";
+<script setup lang="ts">
+import { ref } from 'vue';
 
 interface Usuario {
   id_usuario: number;
@@ -65,183 +64,65 @@ interface Usuario {
   rol: string;
 }
 
-export default defineComponent({
-  name: "UsuarioList",
-  setup() {
-    const usuarios = ref<Usuario[]>([]);
-    const nuevoUsuario = ref<Omit<Usuario, "id_usuario">>({
-      nombre: "",
-      correo: "",
-      rol: "",
+const props = defineProps<{
+  usuarios: Usuario[];
+  apiUrl: string;
+}>();
+
+const emit = defineEmits(['recargar-usuarios', 'mostrar-modal']);
+
+const nuevoUsuario = ref({
+  nombre: '',
+  correo: '',
+  rol: ''
+});
+
+const agregarUsuario = async () => {
+  try {
+    const response = await fetch(props.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(nuevoUsuario.value),
     });
 
-    const cargarUsuarios = async () => {
-      try {
-        const res = await axios.get("https://backend-ycll.onrender.com/api/usuarios")
-        usuarios.value = res.data;
-      } catch (err) {
-        console.error("Error cargando usuarios:", err);
-      }
-    };
+    if (!response.ok) {
+      // --- CORRECCIÓN CLAVE AQUÍ ---
+      // Le aseguramos a TypeScript que el objeto de error tendrá una propiedad 'message' opcional.
+      const errorData = await response.json() as { message?: string };
+      throw new Error(errorData.message || `Error del servidor: ${response.status}`);
+    }
+    
+    nuevoUsuario.value = { nombre: '', correo: '', rol: '' };
+    emit('mostrar-modal', '✅ Éxito', 'El usuario fue agregado correctamente.');
+    emit('recargar-usuarios');
 
-    const agregarUsuario = async () => {
-      if (!nuevoUsuario.value.nombre || !nuevoUsuario.value.correo || !nuevoUsuario.value.rol) {
-        alert("Por favor llena todos los campos");
-        return;
-      }
-      try {
-        const res = await axios.post(
-         "https://backend-ycll.onrender.com/api/usuarios",
-          nuevoUsuario.value
-        );
-        alert(res.data.mensaje);
-        nuevoUsuario.value = { nombre: "", correo: "", rol: "" };
-        cargarUsuarios();
-      } catch (err) {
-        console.error(err);
-        alert("Error al agregar usuario");
-      }
-    };
-
-    onMounted(() => cargarUsuarios());
-
-    return { usuarios, nuevoUsuario, agregarUsuario };
-  },
-});
+  } catch (error: any) {
+    console.error("Error al agregar usuario:", error);
+    emit('mostrar-modal', '❌ Error', `No se pudo agregar el usuario. ${error.message}`, 'error');
+  }
+};
 </script>
 
 <style scoped>
-/* Estilos compartidos para las secciones */
-.management-section {
-  display: grid;
-  grid-template-columns: 350px 1fr;
-  gap: 2rem;
-  align-items: flex-start;
-}
-
-.section-form-card,
-.section-table-card {
-  background-color: var(--clr-foreground);
-  border-radius: 0.75rem;
-  box-shadow: var(--shadow);
-  padding: 1.5rem;
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: var(--clr-text-primary);
-}
-
-/* Estilos del Formulario */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--clr-text-secondary);
-  margin-bottom: 0.5rem;
-}
-
-.form-group input {
-  padding: 0.75rem;
-  border: 1px solid var(--clr-border);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  transition: box-shadow 0.2s, border-color 0.2s;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: var(--clr-primary);
-  box-shadow: 0 0 0 3px #c7d2fe;
-}
-
-.submit-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: var(--clr-primary);
-  color: white;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 1rem;
-}
-
-.submit-button:hover {
-  background-color: var(--clr-primary-hover);
-}
-
-/* Estilos de la Tabla */
-.table-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-.table-container {
-  overflow-x: auto;
-}
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-.data-table th, .data-table td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--clr-border);
-}
-.data-table th {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--clr-text-secondary);
-  background-color: #f9fafb;
-}
-.data-table tr:last-child td {
-  border-bottom: none;
-}
-.data-table tr:hover {
-  background-color: #f9fafb;
-}
-.empty-state {
-  text-align: center;
-  color: var(--clr-text-secondary);
-  padding: 2rem;
-}
-.rol-badge {
-  display: inline-block;
-  background-color: #e0e7ff;
-  color: #3730a3;
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-/* Responsive */
-@media (max-width: 992px) {
-  .management-section {
-    grid-template-columns: 1fr;
-  }
-}
+/* Tus estilos están bien, los puedes dejar como estaban */
+.management-section { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: flex-start; }
+.section-form-card, .section-table-card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.5rem; }
+.card-title { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: #1f2937; }
+.form { display: flex; flex-direction: column; gap: 1rem; }
+.form-group { display: flex; flex-direction: column; }
+.form-group label { font-size: 0.875rem; font-weight: 500; color: #4b5563; margin-bottom: 0.5rem; }
+.form-group input { padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; }
+.form-group input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px #bfdbfe; }
+.submit-button { display: flex; justify-content: center; align-items: center; gap: 0.5rem; background-color: #2563eb; color: white; padding: 0.75rem; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1rem; }
+.submit-button:hover { background-color: #1d4ed8; }
+.table-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; }
+.table-container { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; text-align: left; }
+.data-table th, .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; }
+.data-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; background-color: #f9fafb; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover { background-color: #f9fafb; }
+.empty-state { text-align: center; color: #6b7280; padding: 2rem; }
+.rol-badge { display: inline-block; background-color: #e0e7ff; color: #3730a3; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+@media (max-width: 992px) { .management-section { grid-template-columns: 1fr; } }
 </style>
-

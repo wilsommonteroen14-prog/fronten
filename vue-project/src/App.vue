@@ -1,84 +1,122 @@
 <template>
-  <div id="app-container">
-    <header class="app-header">
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15H12.01M12 12H12.01M12 9H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"></path></svg>
-      <h1>Dashboard de Gestión</h1>
-    </header>
+  <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
+    <div class="w-full max-w-6xl space-y-10">
+      
+      <!-- Sección de Usuarios -->
+      <div class="bg-white p-6 md:p-10 rounded-2xl shadow-lg">
+        <UsuarioList 
+          :usuarios="usuarios" 
+          :api-url="USUARIOS_API_URL"
+          @recargar-usuarios="cargarUsuarios"
+          @mostrar-modal="mostrarModal"
+        />
+      </div>
 
-    <main class="main-content">
-      <UsuarioList />
-      <ClienteList />
-    </main>
+      <!-- Sección de Clientes -->
+      <div class="bg-white p-6 md:p-10 rounded-2xl shadow-lg">
+        <ClienteList 
+          :clientes="clientes" 
+          :api-url="CLIENTES_API_URL"
+          @recargar-clientes="cargarClientes"
+          @mostrar-modal="mostrarModal"
+        />
+      </div>
+
+      <!-- Modal Global -->
+      <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="showModal = false">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-sm w-full text-center" @click.stop>
+          <h3 class="text-xl font-bold text-gray-800 mb-4">{{ modalTitle }}</h3>
+          <p class="text-gray-600 mb-6">{{ modalMessage }}</p>
+          <button @click="showModal = false" :class="modalVariant === 'success' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-red-500 hover:bg-red-600'" class="w-full text-white py-2 rounded-lg transition">
+            Entendido
+          </button>
+        </div>
+      </div>
+
+    </div>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
-import ClienteList from "./components/ClienteList.vue";
-import UsuarioList from "./components/UsuarioList.vue";
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import UsuarioList from './components/UsuarioList.vue';
+import ClienteList from './components/ClienteList.vue';
 
-export default defineComponent({
-  name: "App",
-  components: { ClienteList, UsuarioList },
+// --- Definición de Tipos ---
+interface Usuario {
+  id_usuario: number;
+  nombre: string;
+  correo: string;
+  rol: string;
+}
+
+interface Cliente {
+  id_cliente: number;
+  nombre: string;
+  telefono?: string | null;
+  correo?: string | null;
+  direccion?: string | null;
+}
+
+// --- URLs de la API (Lectura Profesional) ---
+// 1. Lee la variable de entorno de Vercel.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001';
+
+// 2. Construye las URLs completas a partir de la base.
+const USUARIOS_API_URL = `${API_BASE_URL}/api/usuarios`;
+const CLIENTES_API_URL = `${API_BASE_URL}/api/clientes`;
+
+// --- Estado Reactivo ---
+const usuarios = ref<Usuario[]>([]);
+const clientes = ref<Cliente[]>([]);
+const showModal = ref(false);
+const modalTitle = ref('');
+const modalMessage = ref('');
+const modalVariant = ref('success');
+
+// --- Funciones del Modal ---
+const mostrarModal = (title: string, message: string, variant = 'success') => {
+  modalTitle.value = title;
+  modalMessage.value = message;
+  modalVariant.value = variant;
+  showModal.value = true;
+};
+
+// --- Lógica para Cargar Datos ---
+const cargarUsuarios = async () => {
+  try {
+    const res = await fetch(USUARIOS_API_URL);
+    if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+    usuarios.value = await res.json() as Usuario[];
+  } catch (error: unknown) {
+    let message = 'Ocurrió un error desconocido.';
+    if (error instanceof Error) message = error.message;
+    mostrarModal('❌ Error de Conexión', `No se pudo cargar la lista de usuarios. ${message}`, 'error');
+  }
+};
+
+const cargarClientes = async () => {
+  try {
+    const res = await fetch(CLIENTES_API_URL);
+    if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+    clientes.value = await res.json() as Cliente[];
+  } catch (error: unknown) {
+    let message = 'Ocurrió un error desconocido.';
+    if (error instanceof Error) message = error.message;
+    mostrarModal('❌ Error de Conexión', `No se pudo cargar la lista de clientes. ${message}`, 'error');
+  }
+};
+
+// --- Carga Inicial ---
+onMounted(() => {
+  cargarUsuarios();
+  cargarClientes();
 });
 </script>
 
 <style>
-/* Estilos Globales */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-:root {
-  --clr-background: #f8fafc;
-  --clr-foreground: #ffffff;
-  --clr-primary: #4f46e5;
-  --clr-primary-hover: #4338ca;
-  --clr-text-primary: #1e293b;
-  --clr-text-secondary: #64748b;
-  --clr-border: #e2e8f0;
-  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 body {
   font-family: 'Inter', sans-serif;
-  background-color: var(--clr-background);
-  color: var(--clr-text-primary);
-}
-
-#app-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem;
-  gap: 2rem;
-}
-
-.app-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  color: var(--clr-primary);
-  width: 100%;
-  max-width: 1200px;
-}
-
-.app-header h1 {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: var(--clr-text-primary);
-}
-
-.main-content {
-  width: 100%;
-  max-width: 1200px;
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
 }
 </style>
-
