@@ -101,7 +101,7 @@
               <td class="px-6 py-4 text-sm text-gray-700">{{ cliente.correo }}</td>
               <td class="px-6 py-4 text-sm font-medium space-x-2">
                  <button @click="iniciarEdicion(cliente)" class="text-blue-600 hover:text-blue-900">Editar</button>
-                 <button @click="eliminarCliente(cliente.id_cliente)" class="text-red-600 hover:text-red-900">Eliminar</button>
+                 
               </td>
             </tr>
           </tbody>
@@ -218,16 +218,5 @@ const actualizarCliente = async () => {
   }
 };
 
-const eliminarCliente = async (id: number) => {
-  if (!confirm('¿Estás seguro de que quieres eliminar este cliente?')) return;
-  try {
-    const url = `${props.apiUrl}/${id}`;
-    const response = await fetch(url, { method: 'DELETE' });
-    if (!response.ok) throw new Error('Error al eliminar');
-    
-    emit('recargar-clientes');
-  } catch (error) {
-    console.error("Error al eliminar cliente:", error);
-  }
-};
+
 </script>

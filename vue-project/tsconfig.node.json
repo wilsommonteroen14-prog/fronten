@@ -6,7 +6,10 @@
     "cypress.config.*",
     "nightwatch.conf.*",
     "playwright.config.*",
-    "eslint.config.*"
+    "eslint.config.*",
+    "env.d.ts",
+     "src/**/*", 
+     "src/**/*.vue"
   ],
   "compilerOptions": {
     "noEmit": true,
