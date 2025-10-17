@@ -77,7 +77,7 @@ export default defineComponent({
 
     const cargarUsuarios = async () => {
       try {
-        const res = await axios.get("http://localhost:4001/api/usuarios");
+        const res = await axios.get("https://backend-ycll.onrender.com/api/usuarios")
         usuarios.value = res.data;
       } catch (err) {
         console.error("Error cargando usuarios:", err);
@@ -91,7 +91,7 @@ export default defineComponent({
       }
       try {
         const res = await axios.post(
-          "http://localhost:4001/api/usuarios",
+         "https://backend-ycll.onrender.com/api/usuarios",
           nuevoUsuario.value
         );
         alert(res.data.mensaje);

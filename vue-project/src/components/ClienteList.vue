@@ -83,7 +83,7 @@ export default defineComponent({
 
     const cargarClientes = async () => {
       try {
-        const res = await axios.get("http://localhost:4001/api/clientes");
+        const res = await axios.get("https://backend-ycll.onrender.com/api/usuarios");
         clientes.value = res.data;
       } catch (err) {
         console.error("Error cargando clientes:", err);
@@ -97,7 +97,7 @@ export default defineComponent({
       }
       try {
         const res = await axios.post(
-          "http://localhost:4001/api/clientes",
+         "https://backend-ycll.onrender.com/api/usuarios",
           nuevoCliente.value
         );
         alert(res.data.mensaje);
