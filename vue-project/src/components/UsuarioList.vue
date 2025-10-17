@@ -3,53 +3,49 @@
     <div class="section-form-card">
       <h2 class="card-title">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-        <span>Gestión de Clientes</span>
+        <span>Gestión de Usuarios</span>
       </h2>
-      <form @submit.prevent="agregarCliente" class="form">
+      <form @submit.prevent="agregarUsuario" class="form">
         <div class="form-group">
-          <label for="nombre-cliente">Nombre</label>
-          <input id="nombre-cliente" v-model="nuevoCliente.nombre" placeholder="Ej: Juan Pérez" required />
+          <label for="nombre-usuario">Nombre</label>
+          <input id="nombre-usuario" v-model="nuevoUsuario.nombre" placeholder="Ej: Ana García" required />
         </div>
         <div class="form-group">
-          <label for="telefono-cliente">Teléfono</label>
-          <input id="telefono-cliente" v-model="nuevoCliente.telefono" placeholder="Ej: 809-123-4567" />
+          <label for="correo-usuario">Correo Electrónico</label>
+          <input id="correo-usuario" v-model="nuevoUsuario.correo" placeholder="Ej: ana.garcia@correo.com" type="email" required />
         </div>
         <div class="form-group">
-          <label for="correo-cliente">Correo</label>
-          <input id="correo-cliente" v-model="nuevoCliente.correo" type="email" placeholder="Ej: juan.perez@correo.com" />
-        </div>
-        <div class="form-group">
-          <label for="direccion-cliente">Dirección</label>
-          <input id="direccion-cliente" v-model="nuevoCliente.direccion" placeholder="Ej: Av. Principal 123" />
+          <label for="rol-usuario">Rol</label>
+          <input id="rol-usuario" v-model="nuevoUsuario.rol" placeholder="Ej: Administrador" required />
         </div>
         <button type="submit" class="submit-button">
-          Agregar Cliente
+          Agregar Usuario
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
         </button>
       </form>
     </div>
 
     <div class="section-table-card">
-      <h3 class="table-title">Clientes Registrados</h3>
+      <h3 class="table-title">Usuarios Registrados</h3>
       <div class="table-container">
         <table class="data-table">
           <thead>
             <tr>
               <th>ID</th>
               <th>Nombre</th>
-              <th>Teléfono</th>
               <th>Correo</th>
+              <th>Rol</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="clientes.length === 0">
-              <td colspan="4" class="empty-state">No hay clientes registrados.</td>
+            <tr v-if="usuarios.length === 0">
+              <td colspan="4" class="empty-state">No hay usuarios registrados.</td>
             </tr>
-            <tr v-for="cliente in clientes" :key="cliente.id_cliente">
-              <td>#{{ cliente.id_cliente }}</td>
-              <td>{{ cliente.nombre }}</td>
-              <td>{{ cliente.telefono }}</td>
-              <td>{{ cliente.correo }}</td>
+            <tr v-for="usuario in usuarios" :key="usuario.id_usuario">
+              <td>#{{ usuario.id_usuario }}</td>
+              <td>{{ usuario.nombre }}</td>
+              <td>{{ usuario.correo }}</td>
+              <td><span class="rol-badge">{{ usuario.rol }}</span></td>
             </tr>
           </tbody>
         </table>
@@ -62,62 +58,60 @@
 import { defineComponent, ref, onMounted } from "vue";
 import axios from "axios";
 
-interface Cliente {
-  id_cliente: number;
+interface Usuario {
+  id_usuario: number;
   nombre: string;
-  telefono: string;
   correo: string;
-  direccion: string;
+  rol: string;
 }
 
 export default defineComponent({
-  name: "ClienteList",
+  name: "UsuarioList",
   setup() {
-    const clientes = ref<Cliente[]>([]);
-    const nuevoCliente = ref({
+    const usuarios = ref<Usuario[]>([]);
+    const nuevoUsuario = ref<Omit<Usuario, "id_usuario">>({
       nombre: "",
-      telefono: "",
       correo: "",
-      direccion: "",
+      rol: "",
     });
 
-    const cargarClientes = async () => {
+    const cargarUsuarios = async () => {
       try {
-        const res = await axios.get("http://localhost:4001/api/clientes");
-        clientes.value = res.data;
+        const res = await axios.get("http://localhost:4001/api/usuarios");
+        usuarios.value = res.data;
       } catch (err) {
-        console.error("Error cargando clientes:", err);
+        console.error("Error cargando usuarios:", err);
       }
     };
 
-    const agregarCliente = async () => {
-      if (!nuevoCliente.value.nombre) {
-        alert("El nombre es obligatorio.");
+    const agregarUsuario = async () => {
+      if (!nuevoUsuario.value.nombre || !nuevoUsuario.value.correo || !nuevoUsuario.value.rol) {
+        alert("Por favor llena todos los campos");
         return;
       }
       try {
         const res = await axios.post(
-          "http://localhost:4001/api/clientes",
-          nuevoCliente.value
+          "http://localhost:4001/api/usuarios",
+          nuevoUsuario.value
         );
         alert(res.data.mensaje);
-        nuevoCliente.value = { nombre: "", telefono: "", correo: "", direccion: "" };
-        cargarClientes();
+        nuevoUsuario.value = { nombre: "", correo: "", rol: "" };
+        cargarUsuarios();
       } catch (err) {
         console.error(err);
-        alert("Error al agregar cliente");
+        alert("Error al agregar usuario");
       }
     };
 
-    onMounted(() => cargarClientes());
+    onMounted(() => cargarUsuarios());
 
-    return { clientes, nuevoCliente, agregarCliente };
+    return { usuarios, nuevoUsuario, agregarUsuario };
   },
 });
 </script>
 
 <style scoped>
-/* Estos estilos son idénticos a los de UsuarioList para mantener la consistencia */
+/* Estilos compartidos para las secciones */
 .management-section {
   display: grid;
   grid-template-columns: 350px 1fr;
@@ -250,3 +244,4 @@ export default defineComponent({
   }
 }
 </style>
+
