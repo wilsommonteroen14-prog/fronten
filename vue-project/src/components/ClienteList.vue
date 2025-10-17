@@ -45,7 +45,7 @@
           />
         </div>
         
-        <!-- === CAMPO AÑADIDO: Dirección === -->
+        <!-- Campo: Dirección -->
         <div>
           <label for="cliente-direccion" class="block text-sm font-medium text-gray-600 mb-1">Dirección:</label>
           <input
@@ -115,6 +115,119 @@
   </div>
 </template>
 
-<script>
-// ... (El script de este archivo se mantiene igual)
+<script setup lang="ts">
+import { ref } from 'vue';
+
+// --- Definición de Tipos para TypeScript ---
+interface Cliente {
+  id_cliente: number;
+  nombre: string;
+  telefono?: string | null;
+  correo?: string | null;
+  direccion?: string | null;
+}
+
+// --- Props ---
+const props = defineProps<{
+  clientes: Cliente[];
+  apiUrl: string;
+}>();
+
+// --- Emits ---
+const emit = defineEmits(['recargar-clientes']);
+
+// --- Estado Reactivo ---
+const enModoEdicion = ref(false);
+const nuevoCliente = ref({
+  id_cliente: null as number | null,
+  nombre: '',
+  telefono: '',
+  correo: '',
+  direccion: ''
+});
+
+// --- Funciones ---
+const limpiarFormulario = () => {
+  enModoEdicion.value = false;
+  nuevoCliente.value = {
+    id_cliente: null,
+    nombre: '',
+    telefono: '',
+    correo: '',
+    direccion: ''
+  };
+};
+
+// --- CORRECCIÓN CLAVE AQUÍ ---
+const iniciarEdicion = (cliente: Cliente) => {
+  enModoEdicion.value = true;
+  // Al asignar los valores, nos aseguramos de que cumplan con el "Contrato Estricto".
+  // Si un campo es null o undefined, le asignamos una cadena vacía ('').
+  nuevoCliente.value = {
+    id_cliente: cliente.id_cliente,
+    nombre: cliente.nombre,
+    telefono: cliente.telefono || '',
+    correo: cliente.correo || '',
+    direccion: cliente.direccion || '',
+  };
+};
+
+const cancelarEdicion = () => {
+  limpiarFormulario();
+};
+
+const manejarSubmit = () => {
+  if (enModoEdicion.value) {
+    actualizarCliente();
+  } else {
+    agregarCliente();
+  }
+};
+
+const agregarCliente = async () => {
+  try {
+    const response = await fetch(props.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(nuevoCliente.value),
+    });
+    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+    
+    limpiarFormulario();
+    emit('recargar-clientes');
+  } catch (error) {
+    console.error("Error al agregar cliente:", error);
+  }
+};
+
+const actualizarCliente = async () => {
+  if (!nuevoCliente.value.id_cliente) return;
+  try {
+    const url = `${props.apiUrl}/${nuevoCliente.value.id_cliente}`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(nuevoCliente.value),
+    });
+    if (!response.ok) throw new Error('Error al actualizar');
+    
+    limpiarFormulario();
+    emit('recargar-clientes');
+  } catch (error) {
+    console.error("Error al actualizar cliente:", error);
+  }
+};
+
+const eliminarCliente = async (id: number) => {
+  if (!confirm('¿Estás seguro de que quieres eliminar este cliente?')) return;
+  try {
+    const url = `${props.apiUrl}/${id}`;
+    const response = await fetch(url, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Error al eliminar');
+    
+    emit('recargar-clientes');
+  } catch (error) {
+    console.error("Error al eliminar cliente:", error);
+  }
+};
 </script>
